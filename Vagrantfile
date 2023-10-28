@@ -13,37 +13,12 @@ Vagrant.configure("2") do |config|
     sudo apt-get install -y apt-transport-https ca-certificates software-properties-common curl gnupg2
   SHELL
 
-  config.vm.provision "Install InfluxDB", type: "shell", inline: <<-SHELL
-    # download repo key
-    curl -sLO https://repos.influxdata.com/influxdata-archive.key
-    # verify and install repo key
-    echo '943666881a1b8d9b849b74caebf02d3465d6beb716510d86a39f6c8e8dac7515 influxdata-archive.key' | sha256sum -c && cat influxdata-archive.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdata-archive.gpg >/dev/null
-    # create repo file
-    echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive.gpg] https://repos.influxdata.com/debian stable main' | sudo tee /etc/apt/sources.list.d/influxdata.list
-    # clean up
-    rm influxdata-archive.key
-    # install influxdb
-    sudo apt-get update && sudo apt-get install -y influxdb2
-    # start influxdb
-    sudo systemctl start influxdb
-    # enable influxdb
-    sudo systemctl enable influxdb
-  SHELL
+  config.vm.provision "Install InfluxDB", type: "shell", path: "scripts/install_influx.sh"
 
-  config.vm.provision "Install Grafana", type: "shell", inline: <<-SHELL
-    # download repo key
-    curl -sLO https://apt.grafana.com/gpg.key
-    # verify and install repo key
-    echo '58052c148058ace26dbd01ce057afa5709fb9d39c8a8ab16800be3f42fc02ab2  gpg.key' | sha256sum -c && cat gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/grafana.gpg >/dev/null
-    # create repo file
-    echo "deb [signed-by=/etc/apt/trusted.gpg.d/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-    # clean up
-    rm gpg.key
-    # install grafana
-    sudo apt-get update && sudo apt-get install -y grafana
-    # start grafana
-    sudo systemctl start grafana-server
-    # enable grafana
-    sudo systemctl enable grafana-server
+  config.vm.provision "Install Grafana", type: "shell", path: "scripts/install_grafana.sh"
+
+  config.vm.provision "Change settings", type: "shell", inline: <<-SHELL
+    # change grafana domain
+    sudo sed -i 's/;domain = localhost/domain = 10.255.0.10/' /etc/grafana/grafana.ini
   SHELL
 end
